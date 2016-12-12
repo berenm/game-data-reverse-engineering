@@ -1,0 +1,141 @@
+LittleEndian();
+
+enum <uint32> Magic { FACE = 0x45434146 };
+
+struct String {
+  uint16 type;
+  uint32 size;
+  char value[size];
+};
+
+struct {
+  Magic magic;
+
+  uint32 unknown;
+  String entry[2] <optimize=false>;
+  uint16 unknown;
+  uint32 unknown;
+  uint32 unknown;
+
+  String entry <optimize=false>;
+  uint16 unknown;
+
+  uint16 type;
+  if (type != 1) {
+    String entry <optimize=false>;
+    uint16 unknown;
+    uint32 unknown;
+    String entry <optimize=false>;
+    uint16 unknown;
+    uint32 unknown;
+    uint32 unknown;
+    uint32 unknown;
+    String entry <optimize=false>;
+    uint16 unknown;
+    uint32 filesize;
+    uint16 unknown;
+    uint16 count;
+
+    struct {
+      uint32 unknown;
+      uint32 unknown;
+      String entry <optimize=false>;
+      uint16 unknown;
+      uint32 unknown;
+      uint16 unknown;
+      uint16 count;
+
+      struct {
+        float unknown[4];
+        uint16 unknown16;
+      } data[count] <optimize=false>;
+    } data[count] <optimize=false>; 
+
+    uint32 unknown;
+    uint32 unknown;
+    float unknown;
+    float unknown;
+    uint32 unknown;
+    uint32 unknown;
+    uint32 unknown;
+    uint32 unknown;
+    uint16 unknown;
+    uint32 unknown;
+
+  } else {
+      uint32 count;
+      uint32 unknown;
+    
+      struct {
+          uint16 unknown;
+          String entry <optimize=false>;
+          uint16 unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          uint32 unknown;
+      } data[count] <optimize=false>;
+    
+      uint16 unknown;
+      uint32 count2;
+    
+    struct {
+      uint32 unknown;
+      String entry <optimize=false>;
+      uint16 unknown;
+      uint16 unknown;
+    
+      struct {
+          uint32 unknown;
+          uint16 unknown;
+          String entry <optimize=false>;
+          uint16 unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+      } data <optimize=false>;
+    
+      uint32 count;
+      struct {
+          uint32 unknown;
+          uint16 unknown;
+          String entry <optimize=false>;
+          uint16 unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+          float unknown;
+      } data[count] <optimize=false>;
+    } data2[count2] <optimize=false>;
+    
+      uint32 unknown;
+      uint32 unknown;
+      uint32 unknown;
+    
+      String entry <optimize=false>;
+      uint16 unknown;
+      uint16 unknown;
+      uint32 unknown;
+      uint32 unknown;
+}
+
+} header <bgcolor=cLtYellow>;

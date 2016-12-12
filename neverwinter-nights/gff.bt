@@ -1,0 +1,62 @@
+LittleEndian();
+
+struct {
+  char type[4];
+  char version[4];
+  uint32 structs_offset;
+  uint32 structs_count;
+  uint32 fields_offset;
+  uint32 fields_count;
+  uint32 labels_offset;
+  uint32 labels_count;
+  uint32 field_data_offset;
+  uint32 field_data_size;
+  uint32 field_indices_offset;
+  uint32 field_indices_size;
+  uint32 list_indices_offset;
+  uint32 list_indices_size;
+} header <bgcolor=cLtYellow>;
+
+FSeek(header.structs_offset);
+struct {
+  uint32 type;
+  uint32 index_or_offset;
+  uint32 count;
+} structs[header.structs_count] <bgcolor=cLtYellow>;
+
+FSeek(header.fields_offset);
+struct {
+  enum <uint32> {
+    uint8_ = 0,
+    int8_ = 1,
+    uint16_ = 2,
+    int16_ = 3,
+    uint32_ = 4,
+    int32_ = 5,
+    uint64_ = 6,
+    int64_ = 7,
+    float32_ = 8,
+    float64_ = 9,
+    string_ = 10,
+    resref_ = 11,
+    loc_string_ = 12,
+    void_ = 13,
+    struct_ = 14,
+    list_ = 15,
+  } type;
+  uint32 label_index;
+  uint32 data_or_offset;
+} fields[header.fields_count] <bgcolor=cLtYellow>;
+
+FSeek(header.labels_offset);
+struct {
+  char value[16];
+} labels[header.labels_count] <bgcolor=cLtYellow>;
+
+FSeek(header.field_indices_offset);
+uint32 field_indices[header.field_indices_size / 4] <bgcolor=cLtYellow>;
+
+FSeek(header.list_indices_offset);
+uint32 list_indices[header.list_indices_size / 4] <bgcolor=cLtYellow>;
+
+

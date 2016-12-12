@@ -1,0 +1,190 @@
+LittleEndian();
+
+enum <uint32> Magic { NWN2 = 0x324E574E };
+
+struct PacketRef {
+  char   fourcc[4];
+  uint32 offset;
+};
+
+struct PacketHead {
+  char   fourcc[4];
+  uint32 size;
+};
+
+struct Triangle {
+  uint16 indices[3];
+};
+
+struct Material {
+  char   map_diffuse[32];
+  char   map_normal[32];
+  char   map_tint[32];
+  char   map_glow[32];
+  float  color_diffuse[3];
+  float  color_specular[3];
+  float  specular_power;
+  float  specular_value;
+  struct {
+    uint32 alpha_test          : 1;
+    uint32 alpha_blending      : 1;
+    uint32 additive_blending   : 1;
+    uint32 environment_mapping : 1;
+    uint32 cutscene_mesh       : 1;
+    uint32 glow_mapping        : 1;
+    uint32 doesnt_cast_shadows : 1;
+    uint32 projected_texture   : 1;
+    uint32                     : 24;
+  } flags;
+};
+
+struct SkinVertex {
+  float position[3];
+  float normal[3];
+  float bone_weights[4];
+  byte  bone_indices[4];
+  float tangent[3];
+  float binormal[3];
+  float uvw[3];
+  float bone_count;
+};
+
+struct RigdVertex {
+  float position[3];
+  float normal[3];
+  float tangent[3];
+  float binormal[3];
+  float uvw[3];
+};
+
+struct ColVertex {
+  float position[3];
+  float normal[3];
+  float uvw[3];
+};
+
+struct ColSphere {
+  uint32 bone_index;
+  float  radius;
+};
+
+struct WalkVertex {
+  float position[3];
+};
+
+struct WalkTriangle {
+  uint16 indices[3];
+  struct {
+    uint32 walkable : 1;
+    uint32 unknown : 2;
+    uint32 dirt     : 1;
+    uint32 grass    : 1;
+    uint32 stone    : 1;
+    uint32 wood     : 1;
+    uint32 carpet   : 1;
+    uint32 metal    : 1;
+    uint32 swamp    : 1;
+    uint32 mud      : 1;
+    uint32 leaves   : 1;
+    uint32 water    : 1;
+    uint32 puddles  : 1;
+    uint32 padding : 18;
+  } type;
+};
+
+enum <uint16> HairType {
+  HAIR_LOW     =0,
+  HAIR_SHORT   =1,
+  HAIR_PONYTAIL=2,
+};
+
+enum <uint32> HelmType {
+  HELM_NONE_HIDDEN =0,
+  HELM_HAIR_HIDDEN =1,
+  HELM_PARTIAL_HAIR=2,
+  HELM_HEAD_HIDDEN =3,
+};
+
+struct {
+  Magic     magic;
+  uint16    major;
+  uint16    minor;
+  uint32    count;
+  PacketRef reference[count];
+} header <bgcolor=cLtYellow>;
+
+local int32 i;
+for (i = 0; i < count; ++i) {
+  FSeek(reference[i].offset);
+
+  struct {
+    PacketHead header;
+
+    switch (header.fourcc) {
+      case "SKIN":
+        char       name[32];
+        char       skeleton[32];
+        Material   material;
+        uint32     vertex_count;
+        uint32     faces_count;
+        SkinVertex vertex[vertex_count];
+        Triangle   faces[faces_count];
+        break;
+
+      case "RIGD":
+        char       name[32];
+        Material   material;
+        uint32     vertex_count;
+        uint32     faces_count;
+        RigdVertex vertex[vertex_count];
+        Triangle   faces[faces_count];
+        break;
+
+      case "COL2":
+      case "COL3":
+        char       name[32];
+        Material   material;
+        uint32     vertex_count;
+        uint32     faces_count;
+        ColVertex  vertex[vertex_count];
+        Triangle   faces[faces_count];
+        break;
+
+      case "COLS":
+        uint32    count;
+        ColSphere spheres[count];
+        break;
+
+      case "WALK":
+        char         name[32];
+        uint32       unknown;
+        uint32       vertex_count;
+        uint32       faces_count;
+        WalkVertex   vertex[vertex_count];
+        WalkTriangle faces[faces_count];
+        break;
+
+      case "HOOK":
+        char   name[32];
+        uint16 type;
+        uint16 size;
+        float  position[3];
+        float  orientation[9];
+        break;
+
+      case "HAIR":
+        char     name[32];
+        HairType type;
+        float    position[3];
+        float    orientation[9];
+        break;
+
+      case "HELM":
+        char     name[32];
+        HelmType type;
+        float    position[3];
+        float    orientation[9];
+        break;
+    }
+  } packet <bgcolor=cLtCyan>;
+}
