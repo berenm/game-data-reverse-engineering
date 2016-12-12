@@ -1,0 +1,280 @@
+LittleEndian();
+
+string read_strref(uint32 offset) { if (!offset) return ""; return ReadString(offset); }
+
+typedef uint32 strref <read=read_strref, bgcolor=cLtAqua>;
+
+struct List;
+struct CreateInfo;
+struct ExportInfo;
+
+struct Texture;
+struct Material;
+struct Skeleton;
+struct Vertex;
+struct Topology;
+struct Mesh;
+struct Model;
+struct Group;
+struct Animation;
+struct Property;
+struct Image;
+struct MipLevel;
+struct VertexData;
+struct Skeleton;
+struct Bone;
+struct Transform;
+struct VertexAnnotation;
+
+enum Types {
+  cUnknown,
+  cString,
+  cUInt32,
+  cInt32,
+  cFloat,
+  cCreateInfo,
+  cExportInfo,
+  cTexture,
+  cMaterial,
+  cSkeleton,
+  cVertexData,
+  cTopology,
+  cMesh,
+  cModel,
+  cGroup,
+  cAnimation,
+  cProperty,
+  cImage,
+  cMipLevel,
+  cByte,
+  cBone,
+  cTransform,
+  cLightInfo,
+  cCameraInfo,
+  cVertexAnnotation,
+};
+
+struct Value(int type) {
+  switch (type) {
+    default:
+    case cUnknown:
+      break;
+    case cString:
+      string value;
+      break;
+    case cByte:
+      byte value;
+      break;
+    case cUInt32:
+      uint32 value;
+      break;
+    case cInt32:
+      int32 value;
+      break;
+    case cFloat:
+      float value;
+      break;
+    case cCreateInfo:
+      CreateInfo value;
+      break;
+    case cExportInfo:
+      ExportInfo value;
+      break;
+    case cTexture:
+      Texture value;
+      break;
+    case cImage:
+      Image value;
+      break;
+    case cMipLevel:
+      MipLevel value;
+      break;
+    case cVertexData:
+      VertexData value;
+      break;
+    case cSkeleton:
+      Skeleton value;
+      break;
+    case cBone:
+      Bone value;
+      break;
+    case cTransform:
+      Transform value;
+      break;
+    case cVertexAnnotation:
+      VertexAnnotation value;
+      break;
+  }
+};
+
+struct ValueRef(int type) {
+  uint32 offset <format=hex>;
+  if (offset == 0) break;
+  
+  local int64 pos = FTell();
+  FSeek(offset);
+  Value value(type);
+  FSeek(pos);
+};
+
+struct Array(int type, int refs) {
+  uint32 size;
+  uint32 offset <format=hex>;
+
+  if (size == 0) break;
+
+  local int64 pos = FTell();
+  FSeek(offset);
+  if (refs) {
+    ValueRef elements(type)[size] <optimize=false>;
+  } else {
+    Value elements(type)[size] <optimize=false>;
+  }
+  FSeek(pos);
+};
+
+struct CreateInfo {
+  ValueRef name(cString);
+  uint32 version[2];
+  float  units_per_meter;
+  float  origin[3];
+  float  rotation[9];
+};
+
+struct ExportInfo {
+  ValueRef name(cString);
+  uint32 version[4];
+};
+
+struct ExtendedData {
+  uint32 properties_offset;
+  uint32 values_offset;
+
+  local int64 pos = FTell();
+  FSeek(properties_offset);
+  do {
+    Property properties;
+  } while(properties.type > 0);
+
+  FSeek(values_offset);
+  local uint32 i;
+  for (i = 0; properties[i].type > 0; ++i) {
+    switch(properties[i].type) {
+      case 0x03:
+        uint32 values <format=hex>;
+        break;
+      case 0x08:
+        ValueRef values(cString);
+        break;
+      case 0x0A:
+        float values;
+        break;
+      case 0x13:
+        uint32 values;
+        break;
+      default:
+        uint32 values;
+        break;
+    }
+  }
+
+  FSeek(pos);
+};
+
+struct Property {
+  uint32   type;
+  ValueRef name(cString);
+  uint32   unknown1;
+  uint32   cardinality;
+  uint32   unknown2[4];
+};
+
+struct Texture {
+  ValueRef filename(cString);
+  uint32 type;
+  uint32 width;
+  uint32 height;
+  uint32 encoding;
+  uint32 subformat;
+  struct {
+    uint32 bytes_per_pixel;
+    uint32 shift_for_component[4];
+    uint32 bits_for_component[4];
+  } layout;
+  Array images(cImage, 0);
+};
+
+struct Image {
+  Array mipmaps(cMipLevel, 0);
+};
+
+struct MipLevel {
+  uint32 stride;
+  Array pixels(cByte, 0);
+};
+
+struct VertexData {
+  struct {
+    uint32 metadata;
+    local int64 pos = FTell();
+    FSeek(metadata);
+    do {
+      Property properties;
+    } while(properties.type > 0);
+    FSeek(pos);
+    Array data(cFloat, 0);
+  } vertices;
+  Array components(cString, 1);
+  Array annotations(cVertexAnnotation, 0);
+};
+
+struct VertexAnnotation {
+  ValueRef name(cString);
+  uint32 unknown;
+  uint32 indices_maps_from_vertex_to_annotation;
+  Array indicies(cUInt32, 0);
+};
+
+struct Skeleton {
+  ValueRef name(cString);
+  Array bones(cBone, 0);
+};
+
+struct Bone {
+  ValueRef name(cString);
+  uint32 parent;
+  Transform transform;
+  float inverse_world_transform[16];
+
+  ValueRef light_info(cLightInfo);
+  ValueRef camera_info(cCameraInfo);
+
+  ExtendedData extended;
+};
+
+struct Transform {
+  uint32 dimensions;
+  float  origin[3];
+  float  rotation[4];
+  float  transform[9];
+};
+
+typedef struct Gr2Raw {
+  ValueRef create(cCreateInfo);
+  ValueRef export(cExportInfo);
+  ValueRef filename(cString);
+
+  Array    textures(cTexture, 1);
+  Array    materials(cMaterial, 1);
+  Array    skeletons(cSkeleton, 1);
+  Array    vertexes(cVertexData, 1);
+  Array    topologies(cTopology, 1);
+  Array    meshes(cMesh, 1);
+  Array    models(cModel, 1);
+  Array    groups(cGroup, 1);
+  Array    animations(cAnimation, 1);
+
+  ExtendedData properties;
+};
+
+Gr2Raw file <bgcolor=cLtYellow,optimize=false>;

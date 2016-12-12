@@ -1,0 +1,133 @@
+LittleEndian();
+
+struct Section;
+struct Relocation;
+struct Marshalling;
+
+enum Types {
+  cCompressed,
+  cSection,
+  cRelocation,
+  cMarshalling,
+};
+
+struct Array(int type, int start) {
+  uint32 offset <format=hex>;
+  uint32 size <format=hex>;
+
+  if (size == 0) break;
+
+  local int64 pos=FTell();
+  FSeek(offset+start);
+  switch (type) {
+    default: break;
+    case cCompressed:  byte        data[size] <optimize=false>; break;
+    case cSection:     Section     elements[size] <optimize=false>; break;
+    case cRelocation:  Relocation  elements[size] <optimize=false>; break;
+    case cMarshalling: Marshalling elements[size] <optimize=false>; break;
+  }
+  FSeek(pos);
+};
+
+struct Section {
+  uint32 compression;
+
+  Array  compressed(cCompressed, 0) <bgcolor=cLtYellow>;
+  uint32 decompressed_size;
+  uint32 unknown <format=hex>;
+  uint32 parameters[2] <format=hex>;
+
+  Array relocation(cRelocation, 0) <bgcolor=0xaaccff>;
+  Array marshalling(cMarshalling, 0) <bgcolor=0xccaaff>;
+};
+
+struct Reference {
+  uint32 section;
+  uint32 offset <format=hex>;
+};
+
+struct Relocation {
+  uint32    offset <format=hex>;
+  Reference target;
+};
+
+struct Marshalling {
+  uint32    count;
+  uint32    offset <format=hex>;
+  Reference target;
+};
+
+struct Type;
+
+string read_strref(uint32 offset) { if (!offset) return ""; return ReadString(start+offset); }
+typedef uint32 strref <read=read_strref, bgcolor=cLtAqua>;
+
+struct Type;
+
+void TypeList(uint32 offset) {
+  local int64 position=FTell();
+  FSeek(start + offset);
+
+  while (ReadUInt(FTell() + 4) > 0) {
+    Type types;
+  }
+
+  FSeek(position);
+};
+
+void StrRef() {
+  uint32 name_offset <hidden=true, bgcolor=cLtAqua>;
+  if (name_offset == 0) return;
+  
+  local int64 position=FTell();
+  FSeek(start + name_offset);
+  string name;
+  FSeek(position);
+}
+
+local uint32 depth = 0;
+struct Type {
+  uint32 type;
+  StrRef();
+  uint32 next;
+  uint32 count;
+  uint32 unknown[4];
+
+  if (next > 0 && depth < 5) {
+    depth++;
+    TypeList(next);
+    depth--;
+  }
+};
+
+struct Header
+{
+  struct {
+    uint32 magic[4];
+    uint32 size <format=hex>;
+    uint32 format;
+    uint32 reserved[2];
+  } header;
+
+  local int64 start=FTell();
+  struct {
+    uint32 version;
+    uint32 file_size <format=hex>;
+    uint32 crc32 <comment="CRC32 without header but with sections (drop first 104 bytes).">;
+
+    Array sections(cSection,start) <bgcolor=0xccffcc>;
+    Reference type;
+    Reference root;
+
+    uint32 tag;
+    uint32 extra[4];
+  } info;
+
+  start = info.sections.elements[info.type.section].compressed.offset;
+  
+  struct {
+    TypeList(info.type.offset);
+  } structure;
+};
+
+Header header <bgcolor=cLtAqua>;
