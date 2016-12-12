@@ -1,0 +1,62 @@
+// Arcanum art
+
+LittleEndian();
+
+/*
+enum Flags : uint32 {
+  Static = 0x01,
+  Critter = 0x02,
+  Font = 0x04,
+  Facade = 0x08,
+  Unknown = 0x10,
+};
+*/
+
+struct Header {
+  uint32 flags;
+  uint32 frame_rate;
+  uint32 rotation_count;
+  uint32 palette_list[4];
+  uint32 action_frame;
+  uint32 frame_count;
+  uint32 info_list[8];
+  uint32 size_list[8];
+  uint32 data_list[8];
+};
+
+struct Frame {
+  uint32 width;
+  uint32 height;
+  uint32 size;
+  int32 off_x;
+  int32 off_y;
+  int32 hot_x;
+  int32 hot_y;
+};
+
+struct Palette {
+  uint32 count;
+  uint32 color[count];
+};
+
+Header header <bgcolor=cLtYellow>;
+
+local uint32 i;
+for (i = 0; i < 4; ++i) {
+  if (header.palette_list[i] == 0)
+    continue;
+
+  Palette palettes <optimize=false, bgcolor=cLtYellow>;
+}
+
+local uint32 rotation_count = header.rotation_count;
+if (header.flags & 1)
+  rotation_count = 1;
+
+Frame frames[rotation_count * header.frame_count] <bgcolor=cLtBlue>;
+
+for (i = 0; i < rotation_count * header.frame_count; ++i) {
+  struct {
+    uchar pixel[frames[i].size];
+  } image <bgcolor=cLtYellow>;
+}
