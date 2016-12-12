@@ -1,0 +1,59 @@
+// Beyond Good and Evil sally_clean.bf
+
+#include <bge.bti>
+
+LittleEndian();
+
+struct {
+  Magic   magic(4, "BIG");
+  Fixed32 unknown(0x00000022);
+  uint32  fcount <bgcolor=cLtBlue>;
+  uint32  dcount <bgcolor=cLtBlue>;
+  Fixed64 unknown(0x0000000000000000lu);
+  Fixed64 unknown(0xfffffffffffffffflu);
+  uint32  capacity;
+  Fixed32 unknown(0x00000001);
+  uint32  main_id <format=hex>;
+  uint32  fcount;
+  uint32  dcount;
+  uint32  offset <bgcolor=cLtBlue>;
+  Fixed32 unknown(0xffffffff);
+  Fixed32 unknown(0x00000000);
+  uint32  last;
+} header <bgcolor=cLtYellow>;
+
+FSeek(header.offset);
+struct Entry {
+  uint32 offset <format=hex, bgcolor=cLtBlue>;
+  uint32 id <format=hex>;
+} entries[header.capacity] <bgcolor=cLtYellow, read=ReadEntryId>;
+string ReadEntryId(struct Entry& entry) { string out; SPrintf(out, "%08Xh", entry.id); return out; }
+
+struct FileEntry {
+  uint32 size;
+  uint32 next <format=hex>;
+  uint32 prev <format=hex>;
+  uint32 folder <format=hex>;
+  time_t timestamp;
+  char   name[64];
+} files[header.capacity] <bgcolor=cLtBlue, read=ReadFileName>;
+string ReadFileName(struct FileEntry& entry) { return entry.name; }
+
+struct FolderEntry {
+  uint32 file <format=hex>;
+  uint32 child <format=hex>;
+  uint32 next <format=hex>;
+  uint32 prev <format=hex>;
+  uint32 parent <format=hex>;
+  char   name[64];
+} folders[header.capacity] <bgcolor=cLtGreen, read=ReadFolderName>;
+string ReadFolderName(struct FolderEntry& entry) { return entry.name; }
+
+local uint32 e;
+for (e = 0; e < header.fcount; ++e) {
+  FSeek(entries[e].offset);
+  struct {
+    uint32 size <bgcolor=cLtBlue>;
+    uchar bytes[size];
+  } data <bgcolor=cLtYellow>;
+}

@@ -1,0 +1,32 @@
+// Beyond Good and Evil
+
+#include <bge.bti>
+
+LittleEndian();
+
+typedef struct {
+  uint32  id <format=hex>;
+  uint32  unknown <bgcolor=cGray>;
+} Riff2Entry <bgcolor=cLtYellow, read=ReadRiff2Entry>;
+string ReadRiff2Entry(Riff2Entry& entry) { string out; SPrintf(out, "%08Xh", entry.id); return out; }
+
+typedef struct {
+  Magic  type(4, "RIFF");
+  uint32 tsize;
+  Magic  type(4, "WAVE");
+  Magic  type(4, "fmt ");
+  uint32 fsize;
+  byte   data[fsize];
+  Magic  type(4, "data");
+  uint32 dsize;
+} RiffEntry <bgcolor=cLtYellow>;
+
+local uint32 i;
+
+uint32 size <bgcolor=cLtBlue>;
+for (i = 0; i < size; i += 1)
+  Riff2Entry riff2;
+for (i = 0; i < size; i += 1)
+  RiffEntry riff;
+for (i = 0; i < size; i += 1)
+  struct { byte data[riff[i].dsize]; } data;

@@ -1,0 +1,55 @@
+// Beyond Good and Evil
+
+LittleEndian();
+
+uint32 size <bgcolor=cLtBlue>;
+char   type[4] <bgcolor=cLtRed>;
+
+uint16 enum0 <format=hex>;
+Assert(enum0 == 0x00 ||
+       enum0 == 0x08 ||
+       enum0 == 0x09 ||
+       enum0 == 0x00 ||
+       enum0 == 0x40 ||
+       enum0 == 0x48);
+
+uint16 enum1 <format=hex>;
+Assert(enum1 == 0x00 ||
+       enum1 == 0x00 ||
+       enum1 == 0x00 ||
+       enum1 == 0x00 ||
+       enum1 == 0x01 ||
+       enum1 == 0x01 ||
+       enum1 == 0x10);
+
+uint32 unknown <format=hex>;
+uint16 maybe_flags <format=hex>;
+uint16 unknown <format=hex>;
+uint16 unknown <format=hex>;
+uint16 unknown <format=hex>;
+uint16 unknown <format=hex>;
+
+float  matrix0[16];
+
+uint32 enum2 <format=hex>;
+Assert(enum2 == 0x0 ||
+       enum2 == 0x2 ||
+       enum2 == 0x4 ||
+       enum2 == 0x6 ||
+       enum2 == 0xa ||
+       enum2 == 0xe);
+
+float  matrix1[6];
+
+byte   data[size - FTell() + 4] <bgcolor=cLtYellow>;
+
+local uint64 end = FTell();
+local uint32 i = 4;
+for (i = 4; i < end; ++i) {
+  if (ReadUInt(end - i) == i - 4) {
+    FSeek(end - i);
+    uint32 name_size;
+    char   name[name_size];
+    break;
+  }
+}

@@ -1,0 +1,59 @@
+// Beyond Good and Evil
+
+#include <bge.bti>
+
+LittleEndian();
+
+typedef struct (string magic) {
+  uint32 id;
+  Magic  type(4, magic);
+} TxXEntry <bgcolor=cLtYellow, read=ReadTxXEntry>;
+string ReadTxXEntry(TxXEntry& entry) { string out; SPrintf(out, "%08Xh%s", entry.id, entry.type.data); return out; }
+
+struct TxgList {
+  uint32 size <bgcolor=cLtBlue>;
+
+  local uint32 i;
+  for (i = 0; i < size; i += 8)
+    TxXEntry txg(".txg");
+};
+
+struct TxgHeader {
+  uint32 size <bgcolor=cLtBlue>; Assert(size == 160);
+
+  local uint32 i;
+  for (i = 0; i < size; i += 16) {
+    TxXEntry txi(".txi");
+    TxXEntry txs(".txs");
+  }
+
+  uint32 u000 <bgcolor=cGray>;
+};
+
+struct TxgOffsetChunk {
+  uint32 size <bgcolor=cLtBlue>;
+
+  local uint32 i;
+  for (i = 0; i < size; i += 4)
+    uint32 data <bgcolor=cLtYellow>;
+};
+
+struct TxgStringChunk(uint32 count) {
+  uint32 size <bgcolor=cLtBlue>;
+  for (count; count > 0; --count)
+    String data;
+};
+
+struct TxgData {
+  TxgOffsetChunk offsets;
+  TxgStringChunk strings(offsets.size / 4);
+};
+
+local uint32 j;
+while (!FEof()) {
+  TxgList list;
+  for (j = 0; j < list.size; j += 8)
+    TxgHeader txg;
+  for (j = 0; j < list.size; j += 8)
+    TxgData data;
+}

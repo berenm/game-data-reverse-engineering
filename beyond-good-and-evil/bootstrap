@@ -1,0 +1,14 @@
+#!/bin/bash
+
+./extract ~/Games/GoG/Beyond\ Good\ and\ Evil/sally_clean.bf 
+find ROOT/Bin -iname *.bin -print0|xargs -0 -t -I{} ./decomp {} {}.dec
+
+find ROOT/Bin/ -iname *.bin | xargs -I{} bash -c '(tail -c+9 {}|head -c4|grep RIFF)'
+find ROOT/Bin/ -iname *.bin | xargs -I{} bash -c '(tail -c+9 {}|head -c4|grep txg) && mv {} TXG/{}'
+find ROOT/Bin/ -iname *.bin | xargs -I{} bash -c '(tail -c+9 {}|head -c4|grep wow) && mv {} WOW/{}'
+
+find ROOT/Bin/ -iname *.bin | xargs -I{} bash -c '(tail -c+13 {}|head -c4|grep txg) && mv {} TXG2/{}'
+find ROOT/Bin/ -iname *.bin | xargs -I{} bash -c '(tail -c+13 {}|head -c4|grep RIFF) && mv {} RIFF2/{}'
+
+find ROOT/Bin/ -iname *.bin | xargs -I{} bash -c '(head -c4 {}|hd|grep "2c 00") && mv {} 2C00/{}'
+find ROOT/Bin/ -iname *.bin | xargs -I{} bash -c '(head -c4 {}|hd|grep "58 00") && mv {} 5800/{}'

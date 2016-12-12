@@ -1,0 +1,27 @@
+// Beyond Good and Evil
+
+typedef struct (uint32 count, string magic) {
+  char data[count] <bgcolor=cLtRed, format=hex>;
+  Assert(data == magic);
+} Magic <read=ReadMagic>;
+string ReadMagic(Magic& value) { return value.data; }
+
+typedef struct (uint32 value) {
+  uint32 data <bgcolor=cGray, format=hex>;
+  Assert(data == value);
+} Fixed32 <read=ReadFixed32>;
+string ReadFixed32(Fixed32& value) { string out; SPrintf(out, "%08Xh", value.data); return out; }
+
+typedef struct (uint64 value) {
+  uint64 data <bgcolor=cGray, format=hex>;
+  Assert(data == value);
+} Fixed64 <read=ReadFixed64>;
+string ReadFixed64(Fixed64& value) { string out; SPrintf(out, "%016LXh", value.data); return out; }
+
+typedef struct { string value; } String <bgcolor=cLtYellow, read=ReadStr>;
+string ReadStr(String& data) { return data.value; }
+
+struct Chunk {
+  uint32 size <bgcolor=cLtBlue>;
+  byte   data[size] <bgcolor=cLtYellow>;
+};
