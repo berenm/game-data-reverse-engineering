@@ -1,0 +1,148 @@
+// Beyond Good and Evil
+
+#include <bge.bti>
+
+LittleEndian();
+
+typedef struct (string magic) {
+  ResId  id;
+  Magic  type(4, magic);
+} WowEntry <bgcolor=cLtYellow, read=ReadWowEntry>;
+string ReadWowEntry(WowEntry& entry) { string out; SPrintf(out, "%08Xh%s", entry.id.data, entry.type.data); return out; }
+
+struct WowList {
+  uint32 size <bgcolor=cLtBlue>;
+
+  local uint32 i;
+  for (i = 0; i < size; i += 8)
+    WowEntry wow(".wow");
+};
+
+struct GaoList {
+  uint32 size <bgcolor=cLtBlue>;
+
+  local uint32 i;
+  for (i = 0; i < size; i += 4)
+    ResId id;
+};
+
+struct ResTypeList {
+  uint32 size <bgcolor=cLtBlue>;
+
+  local uint32 i;
+  for (i = 0; i < size; i += 8) {
+    ResId        id;
+    PaddedString type(4);
+  }
+};
+
+struct ResList {
+  uint32 size <bgcolor=cLtBlue>;
+  byte   data[size];
+};
+
+typedef struct {
+  uint32 count;
+  uint32 u000[count];
+  float  u001[count*3];
+} GaoHeaderChunk <bgcolor=cLtGray>;
+
+struct GaoHeader {
+  uint32 size <bgcolor=cLtBlue>;
+  Magic  type(4, ".gao");
+
+  uint16 unknown <format=hex>;
+  Assert(unknown == 0x00 ||
+         unknown == 0x08 ||
+         unknown == 0x09 ||
+         unknown == 0x00 ||
+         unknown == 0x40 ||
+         unknown == 0x48 ||
+         unknown == 0x2000);
+  uint16 unknown <format=hex>;
+  Assert(unknown == 0x00 ||
+         unknown == 0x00 ||
+         unknown == 0x00 ||
+         unknown == 0x00 ||
+         unknown == 0x01 ||
+         unknown == 0x01 ||
+         unknown == 0x10);
+  
+  uint32 unknown <format=hex>;
+  uint16 unknown <format=hex>;
+  uint16 unknown <format=hex>;
+  uint16 unknown <format=hex>;
+  uint16 unknown <format=hex>;
+  uint16 unknown <format=hex>;
+  Matrix unknown(4, 4);
+  
+  uint32 unknown <format=hex>;
+  Assert(unknown == 0x0 ||
+         unknown == 0x2 ||
+         unknown == 0x4 ||
+         unknown == 0x6 ||
+         unknown == 0xa ||
+         unknown == 0xe);
+  
+  byte _[size-90];
+  //  SizedString name;
+};
+
+struct WowHeader {
+  uint32  size <bgcolor=cLtBlue>; Assert(size == 180);
+  Magic   type(4, ".wow");
+
+  Fixed32 unknown(3);
+  uint32  unknown;
+  Assert(unknown == 0 ||
+         unknown == 1);
+  uint32  unknown;
+ 
+  PaddedString name(60);
+
+  Matrix  unknown(4, 4);
+  uint32  unknown <fgcolor=cRed>;
+  float   unknown <fgcolor=cRed>;
+  uint32  unknown <fgcolor=cRed>;
+  uint32  unknown <fgcolor=cRed>;
+  uint32  unknown <fgcolor=cRed>;
+
+  ResId   unknown;
+  ResId   unknown;
+  ResId   unknown;
+  ResId   unknown;
+  ResId   unknown;
+
+  if (unknown[9].data != 0xffffffff)
+    ResList list3;
+  if (unknown[10].data != 0xffffffff)
+    ResList list3;
+  if (unknown[12].data != 0)
+    GaoList list0;
+  GaoList list;
+
+  if (unknown[9].data != 0xffffffff)
+    ResList list3;
+  if (unknown[10].data != 0xffffffff)
+    ResList list3;
+  if (unknown[12].data != 0)
+    GaoHeader gao0[list0.size / 4] <optimize=false, fgcolor=cLtGray>;
+  GaoHeader gao[list.size / 4] <optimize=false, fgcolor=cLtGray>;
+};
+
+struct SizesChunk {
+  uint32 size;
+  uint32 sizes[size / 4];
+};
+
+WowHeader wow;
+
+GaoList list;
+Chunk unknown;
+Chunk unknown;
+
+ResTypeList list;
+Chunk unknown;
+Chunk unknown;
+Chunk unknown;
+Chunk unknown;

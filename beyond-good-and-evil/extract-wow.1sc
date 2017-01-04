@@ -1,0 +1,64 @@
+// Beyond Good and Evil
+
+LittleEndian();
+
+local uint32 j;
+local uint32 n;
+local uint32 size;
+local uint32 id;
+local string type;
+local string name;
+local string filename;
+
+local int64 begin = -1;
+local TFindResults results;
+
+while (FTell() < FileSize() - 8) {
+  size = ReadUInt(FTell());
+  for (j = 0; j < size; j += 8) {
+    id   = ReadUInt(FTell() + j + 4);
+    type = ReadString(FTell() + j + 8, 4);
+    Printf("%x%s\n", id, type);
+  }
+  FSeek(FTell() + size + 4);
+
+  for (j = 0; j < size; j += 8) {
+    results = FindAll(".wow", true, false, 0, 0.0, 1, FTell());
+    if (results.count == 0) {
+      FSeek(FileSize());
+      break;
+    }
+    FSeek(results.start[0] - 4);
+
+    size = ReadUInt(FTell());
+    type = ReadString(FTell() + 4, 4);
+    if (type == ".wow") {
+      if (begin != -1) {
+        Printf("%s.wow: %x-%x %x\n", name, begin, FTell(), FTell() - begin);
+        n = 0;
+        do {
+          SPrintf(filename, "%s-%s-%d.wow", GetFileName(), name, n++);
+        } while (FileExists(filename));
+        FileSaveRange(filename, begin, FTell() - begin);
+      }
+      begin = FTell();
+      name = ReadString(FTell() + 20);
+      FSeek(FTell() + size);
+    }
+  }
+
+/*
+  WowList list;
+  for (j = 0; j < list.size; j += 8)
+    WowHeader wow;
+*/
+}
+
+if (begin != -1) {
+  Printf("%s.wow: %x-%x %x\n", name, begin, FTell(), FTell() - begin);
+  n = 0;
+  do {
+    SPrintf(filename, "%s-%s-%d.wow", GetFileName(), name, n++);
+  } while (FileExists(filename));
+  FileSaveRange(filename, begin, FTell() - begin);
+}

@@ -4,8 +4,37 @@
 
 LittleEndian();
 
-uint32 size <bgcolor=cLtBlue>;
-Magic  type(4, ".gao");
+typedef struct (string magic) {
+  ResId  id;
+  Magic  type(4, magic);
+} WowEntry <bgcolor=cLtYellow, read=ReadWowEntry>;
+string ReadWowEntry(WowEntry& entry) { string out; SPrintf(out, "%08Xh%s", entry.id.data, entry.type.data); return out; }
+
+struct WowList {
+  uint32 size <bgcolor=cLtBlue>;
+
+  local uint32 i;
+  for (i = 0; i < size; i += 8)
+    WowEntry wow(".wow");
+};
+
+struct GaoList {
+  uint32 size <bgcolor=cLtBlue>;
+
+  local uint32 i;
+  for (i = 0; i < size; i += 4)
+    ResId id;
+};
+
+typedef struct {
+  uint32 count;
+  uint32 u000[count];
+  float  u001[count*3];
+} GaoHeaderChunk <bgcolor=cLtGray>;
+
+struct GaoHeader {
+  uint32 size <bgcolor=cLtBlue>;
+  Magic  type(4, ".gao");
 
 local uint64 begin = FTell();
 
@@ -254,4 +283,55 @@ case 0x97020:
 }
 } custom;
 
-SizedString name;
+//  SizedString name;
+
+FSeek(begin + size - 4);
+};
+
+struct WowHeader {
+  uint32  size <bgcolor=cLtBlue>; Assert(size == 180);
+  Magic   type(4, ".wow");
+
+  Fixed32 unknown(3);
+  uint32  unknown;
+  Assert(unknown == 0 ||
+         unknown == 1);
+  uint32  unknown;
+ 
+  PaddedString name(60);
+
+  Matrix  unknown(4, 4);
+  Fixed32 unknown(6);
+  float   unknown <bgcolor=cGray>;
+  uint32  unknown <bgcolor=cGray>;
+  uint32  unknown <bgcolor=cGray>;
+  uint32  unknown <bgcolor=cGray>;
+
+  ResId   unknown;
+  ResId   unknown;
+  ResId   unknown;
+
+  ResId unknown;
+  ResId unknown;
+  if (unknown[12].data != 0)
+    GaoList list0;
+  GaoList list;
+  if (unknown[12].data != 0)
+    GaoHeader gao0[list0.size / 4] <optimize=false>;
+  GaoHeader gao[list.size / 4] <optimize=false>;
+};
+
+struct SizesChunk {
+  uint32 size;
+  uint32 sizes[size / 4];
+};
+
+local uint32 j;
+while (!FEof()) {
+  WowList list;
+  for (j = 0; j < list.size; j += 8) {
+    WowHeader wow;
+    SizesChunk unknown;
+    SizesChunk unknown[4] <optimize=false>;
+  }
+}
