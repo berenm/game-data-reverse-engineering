@@ -1,0 +1,41 @@
+#include "../common.bt"
+
+BigEndian();
+
+enum <uint32> FileFlags { NONE=32, LZSS=64, };
+
+struct File {
+  Sized8String name;
+  FileFlags    flags;
+  uint32       offset;
+  uint32       size_unpacked;
+  uint32       size_packed;
+
+  local uint64 position = FTell();
+  if (flags == NONE) {
+    FSeek(offset);
+    byte contents[size_unpacked] <bgcolor=cLtYellow>;
+    FSeek(position);
+  } else if (flags == LZSS) {
+    FSeek(offset);
+    byte contents[size_packed] <bgcolor=cLtYellow>;
+    FSeek(position);
+  }
+};
+
+struct Folder {
+  uint32 file_count;
+  uint32 unknown[2];
+  uint32 timestamp;
+  File   files[file_count] <optimize=false>;
+};
+
+struct Header {
+  uint32       folder_count;
+  uint32       unknown[2];
+  uint32       timestamp;
+  Sized8String folder_names[folder_count] <optimize=false>;
+  Folder       folders[folder_count] <optimize=false>;
+};
+
+Header header;

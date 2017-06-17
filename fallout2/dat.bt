@@ -1,0 +1,39 @@
+#include "../common.bt"
+
+LittleEndian();
+
+enum <byte> FileFlags { NONE=0, ZLIB=1, };
+
+struct File {
+  SizedString  name;
+  FileFlags    flags;
+  uint32       size_unpacked;
+  uint32       size_packed;
+  uint32       offset;
+
+  local uint64 position = FTell();
+  if (flags == NONE) {
+    FSeek(offset);
+    byte contents[size_unpacked] <bgcolor=cLtYellow>;
+    FSeek(position);
+  } else if (flags == ZLIB) {
+    FSeek(offset);
+    byte contents[size_packed] <bgcolor=cLtYellow>;
+    FSeek(position);
+  }
+};
+
+struct Footer {
+  uint32 index_size;
+  uint32 file_size;
+};
+
+struct Index {
+  uint32 file_count;
+  File   files[file_count] <optimize=false>;
+};
+
+FSeek(FileSize() - 8);
+Footer footer;
+FSeek(FileSize() - 8 - footer.index_size);
+Index index;

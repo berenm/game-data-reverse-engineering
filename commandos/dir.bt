@@ -1,0 +1,36 @@
+#include "../common.bt"
+
+LittleEndian();
+
+enum <uint32> EntryType {
+  FILE = 0xcdcdcd00,
+  DIR  = 0xcdcdcd01,
+  EOD  = 0xcdcdcdff
+};
+struct Entry {
+  PaddedString name(32);
+  EntryType    type <bgcolor=cLtYellow>;
+  uint32       size <bgcolor=cLtYellow>;
+  uint32       offset <bgcolor=cLtYellow>;
+   
+  local uint64 position = FTell();
+  if (type == DIR) {
+    FSeek(offset);
+    ReadEntries();
+    FSeek(position);
+  } else if (type == FILE) {
+    FSeek(offset);
+    byte contents[size] <bgcolor=cLtYellow>;
+    FSeek(position);
+  }
+};
+
+void ReadEntries() {
+  while (true) {
+    Entry entry;
+    if (entry.type == EOD)
+      break;
+  }
+}
+
+ReadEntries();
