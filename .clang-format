@@ -1,0 +1,8 @@
+---
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+ColumnLimit: 80
+PointerAlignment: Left
+AlwaysBreakTemplateDeclarations: false
+AlignEscapedNewlinesLeft: true
+...

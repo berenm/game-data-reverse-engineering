@@ -1,0 +1,150 @@
+#include "../common.bt"
+
+LittleEndian();
+
+typedef struct (uint32 size, char base) {
+  local uint32 size = size;
+  local char   base = base;
+  char data[size];
+} RotString <bgcolor=cLtYellow, read=ReadRotString>;
+
+string ReadRotString(RotString& value) {
+  string out;
+  local uint32 i;
+  for (i = 0; i < value.size && value.data[i]; ++i)
+    out += value.data[i] - value.base;
+  return out;
+}
+
+ubyte GetNextRandom(uint32& rand_val)
+{
+    return (((rand_val = rand_val * 214013 + 2531011) >> 16) & 0x7fff) & 0xff;
+}
+
+typedef struct (uint32& base, uint32 size) {
+  local uint32 size = size;
+  local ubyte  offs[size];
+  local uint32 i = 0;
+  for (i = 0; i < size; ++i)
+    offs[i] = GetNextRandom(base);
+
+  ubyte data[size];
+  local ubyte decrypted[size];
+} RandomizedData;
+
+void DecryptRandomizedData(RandomizedData& value) {
+  local uint32 i;
+  for (i = 0; i < value.size; ++i)
+    value.decrypted[i] = value.data[i] - value.offs[i];
+}
+
+typedef struct (uint32& base) {
+  RandomizedData data(base, 1);
+} RandUInt8 <bgcolor=cLtYellow, read=ReadRandUInt8>;
+
+ubyte DecryptRandUInt8(RandUInt8& value) {
+  DecryptRandomizedData(value.data);
+
+  local ubyte v = 0;
+  local uint32 i;
+  for (i = 0; i < 1; ++i)
+    v = (v << 8) + value.data.decrypted[i];
+
+  return v;
+}
+
+string ReadRandUInt8(RandUInt8& value) {
+  string out;
+  SPrintf(out, "%d", DecryptRandUInt8(value));
+  return out;
+}
+
+typedef struct (uint32& base) {
+  RandomizedData data(base, 4);
+} RandUInt32 <bgcolor=cLtYellow, read=ReadRandUInt32>;
+
+uint32 DecryptRandUInt32(RandUInt32& value) {
+  DecryptRandomizedData(value.data);
+
+  local uint32 v = 0;
+  local uint32 i;
+  for (i = 0; i < 4; ++i)
+    v = (v << 8) + value.data.decrypted[3-i];
+
+  return v;
+}
+
+string ReadRandUInt32(RandUInt32& value) {
+  string out;
+  SPrintf(out, "%d", DecryptRandUInt32(value));
+  return out;
+}
+
+typedef struct (uint32& base, uint32 max_size) {
+  local ubyte  offs[max_size];
+  local uint32 i = 0;
+  do {
+    offs[i++] = GetNextRandom(base);
+    ubyte data;
+  } while (data - offs[i - 1] > 0);
+  local uint32 size = i;
+
+  local ubyte decrypted[size];
+} RandString <bgcolor=cLtYellow, read=ReadRandString>;
+
+string ReadRandString(RandString& value) {
+  local uint32 i;
+  for (i = 0; i < value.size; ++i)
+    value.decrypted[i] = value.data[i] - value.offs[i];
+
+  string out;
+  SPrintf(out, "%s", value.decrypted);
+  return out;
+}
+
+struct Header {
+  Magic magic(5, "CLIB\x1a");
+  byte  version;
+
+  if (version >= 10) {
+    Magic number(1, "\x00");
+
+    if (version >= 21) {
+      uint32 rand_seed;
+      local uint32 rand_value = rand_seed + 9338638;
+
+      RandUInt32 clib_count(rand_value);
+      RandString clib_name(rand_value, 50)[DecryptRandUInt32(clib_count)] <optimize=false>;
+      RandUInt32 file_count(rand_value);
+      RandString file_name(rand_value, 50)[DecryptRandUInt32(file_count)] <optimize=false>;
+      RandUInt32 file_offs(rand_value)[DecryptRandUInt32(file_count)] <optimize=false>;
+      RandUInt32 file_size(rand_value)[DecryptRandUInt32(file_count)] <optimize=false>;
+      RandUInt8  file_uuid(rand_value)[DecryptRandUInt32(file_count)] <optimize=false>;
+    } else if (version >= 20) {
+    } else {
+    }
+  } else {
+    byte   method;
+    byte   unused;
+    uint16 file_count;
+    char   password[13];
+
+    RotString file_name(13, method)[file_count] <optimize=false>;
+    uint32    file_size[file_count];
+    byte      file_flag[file_count];
+    byte      file_ratio[file_count];
+  }
+};
+
+struct Footer {
+  uint32 offset;
+  Magic  magic(12, "CLIB\x01\x02\x03\x04SIGE");
+};
+
+if (ReadString(0, 5) != "CLIB\x1a") {
+  FSeek(FileSize() - 16);
+  Footer footer;
+  FSeek(footer.offset);
+}
+
+Header header;

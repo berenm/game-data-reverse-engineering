@@ -550,7 +550,7 @@ afr sym.jade_are_points_within_range 0x00425a00
 afr sym.jade_insert_in_global_double_linked_list 0x00ac8240
 afr sym.jade_create_wow_subnode 0x0047b1d0
 afr sym.jade_create_wow_node 0x0047b480
-afr sym.jade_push_wow_element 0x00421e00
+afr sym.jade_push_parser 0x00421e00
 
 afr sym.jade_binary_search_from_global_list 0x004280e0
 afr sym.jade_binary_search_by_id 0x00427410

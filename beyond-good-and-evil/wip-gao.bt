@@ -181,7 +181,8 @@ case 0x97020:
   uint32      unknown;
   uint32      unknown;
   uint32      unknown;
-  GaoHeaderChunk unknown[unknown[17]] <optimize=false>;
+local uint32 size = unknown[17];
+  // GaoHeaderChunk unknown[size] <optimize=false>;
   uint32 u006;
   float  u006;
   float  u006;

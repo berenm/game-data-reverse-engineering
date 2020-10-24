@@ -1,0 +1,114 @@
+// Undertale
+
+typedef struct (uint32 count, string magic) {
+  char data[count] <bgcolor=cLtRed, format=hex>;
+  Assert(data == magic);
+} Magic <read=ReadMagic>;
+string ReadMagic(Magic& value) { return value.data; }
+
+typedef struct (uint32 value) {
+  uint32 data <bgcolor=cGray, format=hex>;
+  Assert(data == value);
+} Fixed32 <read=ReadFixed32>;
+string ReadFixed32(Fixed32& value) { string out; SPrintf(out, "%08Xh", value.data); return out; }
+
+typedef struct (uint64 value) {
+  uint64 data <bgcolor=cGray, format=hex>;
+  Assert(data == value);
+} Fixed64 <read=ReadFixed64>;
+string ReadFixed64(Fixed64& value) { string out; SPrintf(out, "%016LXh", value.data); return out; }
+
+typedef struct { string value; } String <bgcolor=cLtYellow, read=ReadStr>;
+string ReadStr(String& data) { return data.value; }
+
+typedef struct (uint32 size) { char value[size]; } PaddedString <bgcolor=cLtYellow, read=ReadPaddedString>;
+string ReadPaddedString(PaddedString& data) { return data.value; }
+
+typedef struct { uint32 size; char value[size]; } SizedString <bgcolor=cLtYellow, read=ReadSizedString>;
+string ReadSizedString(SizedString& data) { return data.value; }
+
+typedef struct { uint32 size; char value[size+1]; } SizedCString <bgcolor=cLtYellow, read=ReadSizedCString>;
+string ReadSizedCString(SizedCString& data) { return data.value; }
+
+typedef struct { uint32 count; uint32 data[count]; } UInt32Array;
+
+typedef struct {
+  uint32 data <bgcolor=0x80a0ff, format=hex>;
+} ResId <read=ReadResId>;
+string ReadResId(ResId& value) { string out; SPrintf(out, "%08Xh", value.data); return out; }
+
+typedef struct (uint32 width, uint32 height) {
+  local uint32 width = width;
+  local uint32 height = height;
+  float data[width * height] <bgcolor=cLtPurple, format=hex>;
+} Matrix <read=ReadMatrix>;
+string ReadMatrix(Matrix& value) {
+  local string out = "{", buf;
+  local uint32 x,y;
+  for (y = 0; y < value.height; ++y) {
+    if (y > 0) out += ",\n";
+    out += "{";
+    for (x = 0; x < value.width; ++x) {
+      if (x > 0) out += ",";
+      SPrintf(buf, "%f", value.data[x + y * value.width]);
+      out += buf;
+    }
+    out += "}";
+  }
+  out += "}";
+  return out;
+}
+
+typedef struct (string fourcc) {
+  Magic  magic(4, fourcc);
+  uint32 size;
+  byte   data[size] <bgcolor=cLtYellow>;
+} Chunk <read=ReadChunk>;
+string ReadChunk(Chunk& value) {
+  return value.magic.data;
+}
+
+struct STRG {
+  Magic  magic(4, "STRG");
+  uint32 size;
+
+  local uint32 pos = FTell();
+
+  uint32       count;
+  uint32       offsets[count] <format=hex>;
+  SizedCString strings[count] <optimize=false>;
+
+  byte padding[size - (FTell() - pos)];
+};
+
+struct FORM {
+  Magic  magic(4, "FORM");
+  uint32 size <bgcolor=cLtBlue>;
+
+  Chunk gen8("GEN8");
+  Chunk optn("OPTN");
+  Chunk extn("EXTN");
+  Chunk sond("SOND");
+  Chunk agrp("AGRP");
+  Chunk sprt("SPRT");
+  Chunk bgnd("BGND");
+  Chunk path("PATH");
+  Chunk scpt("SCPT");
+  Chunk shdr("SHDR");
+  Chunk font("FONT");
+  Chunk tmln("TMLN");
+  Chunk objt("OBJT");
+  Chunk room("ROOM");
+  Chunk dafl("DAFL");
+  Chunk tpag("TPAG");
+  Chunk code("CODE");
+  Chunk vari("VARI");
+  Chunk func("FUNC");
+  // Chunk strg("STRG");
+  STRG  strg;
+  Chunk txtr("TXTR");
+  Chunk audo("AUDO");
+  STRG  strg;
+};
+
+FORM form;

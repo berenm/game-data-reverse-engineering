@@ -6,7 +6,7 @@ LittleEndian();
 
 struct {
   Magic   magic(4, "BIG");
-  Fixed32 unknown(0x00000022);
+  uint32  unknown; // (0x00000022 == BGE, 0x00000025 == PoP SoT & WW, 0x00000026 == PoP TT)
   uint32  fcount <bgcolor=cLtBlue>;
   uint32  dcount <bgcolor=cLtBlue>;
   Fixed64 unknown(0x0000000000000000lu);
